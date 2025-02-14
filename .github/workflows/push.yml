@@ -141,9 +141,10 @@ jobs:
       with:
         body_path: ${{ github.workspace }}-CHANGELOG.txt
         generate_release_notes: true
+        # Mark as prerelease if tag ends with b
+        prerelease: ${{ endsWith(github.ref_name, 'b') }}
         files: |
           ./artifacts/*.zip
     # This creates a release for the current (new) version tag that includes:
     # - all created plugin directories as .zip files
     # - ...
-    # - some Windows scripts
