@@ -3,6 +3,12 @@ project(ExternalOpenCVStatic)
 
 include(ExternalProject)
 
+option(DISABLE_WEBP_EXTERNAL_OPENCV "Disable OpenCV library 3rd party dependency for WEBP (from subdirectory)" OFF)
+if(DISABLE_WEBP_EXTERNAL_OPENCV)
+    # Crashes on some CPUs because of SSE3 problems
+    list(APPEND CUSTOM_CMAKE_OPENCV_ARGS -DWITH_WEBP=OFF)
+endif()
+
 # Set where to download and build OpenCV
 set(OPENCV_INSTALL_DIR "${CMAKE_BINARY_DIR}/opencv_static_install")
 # Set the URL to clone OpenCV from GitHub
@@ -30,12 +36,24 @@ ExternalProject_Add(
         -DBUILD_DOCS=OFF
         -DBUILD_EXAMPLES=OFF
         -DBUILD_PERF_TESTS=OFF
-        # Disable unused modules for faster build times
+        # Disable unnecessary functionality
+        -DWITH_FFMPEG=OFF
+        -DWITH_GSTREAMER=OFF
         -DWITH_GTK=OFF
         -DWITH_OPENEXR=OFF
+        -DWITH_QT=OFF
         -DBUILD_opencv_java=OFF
         -DBUILD_opencv_python3=OFF
+        # Disable apparently unnecessary modules for faster build times
+        # (Comment the following part if this results in errors around missing files/libraries)
+        -DBUILD_opencv_highgui=OFF
+        -DBUILD_opencv_ml=OFF
+        -DBUILD_opencv_objdetect=OFF
         -DBUILD_opencv_stitching=OFF
+        -DBUILD_opencv_video=OFF
+        -DBUILD_opencv_videoio=OFF
+        # Custom arguments
+        ${CUSTOM_CMAKE_OPENCV_ARGS}
     # Declare expected output files that will be generated after the external project is built
     BUILD_BYPRODUCTS "${OpenCV_DIR}/OpenCVConfig.cmake"
 )

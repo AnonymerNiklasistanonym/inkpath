@@ -24,7 +24,7 @@ file(GLOB DEBUG_SOURCES src/cv/debug/*.cpp)
 
 # Locate dependent packages
 option(USE_EXTERNAL_OPENCV_STATIC "Link OpenCV statically (from subdirectory)" OFF)
-IF(NOT WIN32 AND USE_EXTERNAL_OPENCV_STATIC)
+IF(USE_EXTERNAL_OPENCV_STATIC)
 	add_subdirectory(external/opencv_static)
 	IF(EXISTS "${OpenCV_DIR}")
 		# Require that the package is only being detected using the provided path from external project
@@ -33,10 +33,11 @@ IF(NOT WIN32 AND USE_EXTERNAL_OPENCV_STATIC)
 ELSE()
 	FIND_PACKAGE(OpenCV 4.5.1 REQUIRED COMPONENTS core imgproc imgcodecs calib3d)
 ENDIF()
-message(STATUS "OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
-message(STATUS "OpenCV_LIBRARIES: ${OpenCV_LIBRARIES}")
-INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
-
+IF(OpenCV_FOUND)
+	message(STATUS "OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
+	message(STATUS "OpenCV_LIBRARIES: ${OpenCV_LIBRARIES}")
+	INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
+ENDIF()
 FIND_PACKAGE(Lua 5.4 REQUIRED)
 message(STATUS "LUA_INCLUDE_DIR: ${LUA_INCLUDE_DIR}")
 message(STATUS "LUA_LIBRARIES: ${LUA_LIBRARIES}")
@@ -58,10 +59,9 @@ ELSE()
 	target_compile_options(inkpath PRIVATE)
 	target_link_libraries(inkpath ipcv)
 
-	# Add project dependency if it should be linked against the static OpenCV libraries
+	# Add dependencies if required by given options
 	IF(USE_EXTERNAL_OPENCV_STATIC)
 		add_dependencies(ipcv ExternalOpenCVStatic)
-		add_dependencies(${PROJECT_NAME} ExternalOpenCVStatic)
 	ENDIF()
 ENDIF()
 
@@ -89,3 +89,10 @@ target_compile_definitions(inkpath-debug PRIVATE INKPATH_DEBUG)
 target_link_libraries(inkpath-debug ${OpenCV_LIBRARIES})
 set_target_properties(inkpath-debug PROPERTIES OUTPUT_NAME "inkpath-debug")
 set_target_properties(inkpath-debug PROPERTIES RUNTIME_OUTPUT_DIRECTORY "debug")
+
+
+# Add dependencies if required by given options
+IF(USE_EXTERNAL_OPENCV_STATIC)
+	add_dependencies(${PROJECT_NAME} ExternalOpenCVStatic)
+	add_dependencies(${PROJECT_NAME}-debug ExternalOpenCVStatic)
+ENDIF()
