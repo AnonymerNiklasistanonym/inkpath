@@ -79,10 +79,6 @@ FOREACH(FILE ${PLUGIN_FILES})
 	file(COPY ${FILE} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 ENDFOREACH()
 
-IF(WIN32)
-	install(CODE "execute_process(COMMAND bash \"${CMAKE_SOURCE_DIR}/scripts/copy_dlls.sh\")")
-ENDIF()
-
 # Finally, set an install target.
 install(DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} DESTINATION ${INSTALL_DESTINATION})
 
@@ -100,3 +96,17 @@ IF(USE_EXTERNAL_OPENCV_STATIC)
 	add_dependencies(${PROJECT_NAME} ExternalOpenCVStatic)
 	add_dependencies(${PROJECT_NAME}-debug ExternalOpenCVStatic)
 ENDIF()
+
+# If cross compiling on Windows copy dependent DLLs
+if(CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
+    add_custom_command(
+        TARGET ${PROJECT_NAME}
+        POST_BUILD
+        COMMAND
+            ldd "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib${PROJECT_NAME}.dll" | grep
+            mingw64 | awk "{ print \$3 }" | xargs -I {} cp {}
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+        COMMENT "Copying ${PROJECT_NAME} dependent MinGW DLLs"
+        VERBATIM
+    )
+endif()
